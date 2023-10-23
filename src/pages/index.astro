@@ -1,0 +1,384 @@
+---
+import GameCard from '../components/GameCard.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from "astro:content";
+
+const games = await getCollection("games");
+---
+
+<BaseLayout>
+	<main>	
+		<div id="game-screen"></div>	
+
+		<section id="game-grid">
+
+			<div id="game-displayer" class="bg-[#6842ff]">
+	
+				<div id="game-loader" aria-label="Loading..." role="status" class="flex items-center justify-center space-x-2">
+					<svg class="h-20 w-20 animate-spin stroke-white" viewBox="0 0 256 256"><line x1="128" y1="32" x2="128" y2="64" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"></line><line x1="195.9" y1="60.1" x2="173.3" y2="82.7" stroke-linecap="round" stroke-linejoin="round"stroke-width="24"></line><line x1="224" y1="128" x2="192" y2="128" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"></line><line x1="195.9" y1="195.9" x2="173.3" y2="173.3" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"></line><line x1="128" y1="224" x2="128" y2="192" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"></line><line x1="60.1" y1="195.9" x2="82.7" y2="173.3" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"></line><line x1="32" y1="128" x2="64" y2="128" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"></line><line x1="60.1" y1="60.1" x2="82.7" y2="82.7" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"></line></svg>
+					<span class="text-4xl text-white font-black">Loading</span>
+				</div>
+
+				<iframe id="game-iframe" allowfullscreen src=""></iframe>
+				<div id='RVMPlayer'></div>
+			</div> 
+			
+			{games.map((game, i) => <GameCard game={game} index={i}/>)}
+
+		</section>
+	</main>
+</BaseLayout>
+
+<script is:inline define:vars={{games: games}}>
+	var gridNumColumns = 0;
+	var loading = false;
+	
+	const screenElement = document.querySelector('#game-screen');
+	const gridElement = document.querySelector('#game-grid');
+	const cardElements = document.querySelectorAll('.game-card');
+	const gameDisplayerElement = document.querySelector('#game-displayer');
+	const gameLoaderElement = document.querySelector("#game-loader");
+	const iframeElement = document.getElementById("game-iframe");
+	const rmvElement = document.getElementById("RVMPlayer");
+	const gridComputedStyle = getComputedStyle(gridElement);
+
+	addEventListener("DOMContentLoaded", ()=> {
+		
+		iframeElement?.addEventListener("load", function() {
+			loading = false;
+			gameLoaderElement.classList.add("display-none");
+			doAllCardInteractable();
+		});
+
+		rmvElement?.addEventListener("DOMNodeInserted", function() {
+			loading = false;
+			gameLoaderElement.classList.add("display-none");
+			doAllCardInteractable();
+		}, true);
+
+		cardElements.forEach((cardElement) => {
+			cardElement.addEventListener("mouseenter", onCardEnter.bind(this, cardElement));
+			cardElement.addEventListener("mouseleave", onCardLeave.bind(this, cardElement));
+			cardElement.addEventListener("click", onCardClick.bind(this, cardElement));
+		});
+
+		/*
+		const resizeObserver = new ResizeObserver((entries) => {updateAll()});
+		if(resizeObserver) resizeObserver.observe(document.body);
+		else window.addEventListener("resize", updateAll);
+		*/
+		window.addEventListener("resize", updateAll);
+
+		updateAll();
+	});
+
+	
+
+	function onCardEnter(cardElement){
+		if(!document.body) return;
+		modifyCardUI(cardElement, "enter");
+    }
+
+    function onCardLeave(cardElement){
+		if(!document.body) return;
+		modifyCardUI(cardElement, "leave");
+    }
+
+	function onCardClick(cardElement){
+		if(!document.body) return;
+		const selectedCard = getSelectedCardElement();
+		if(selectedCard === cardElement){
+			deselectCard(selectedCard);
+			updateAll();
+		}
+		else{
+			selectCard(cardElement);
+		}
+	}
+
+	async function selectCard(cardElement){
+		loading = true;
+
+		const prevSelectedCard = getSelectedCardElement();
+
+		cardElement.classList.add("selected-card");
+		gameLoaderElement.classList.remove("display-none");
+		const game = getGameByElement(cardElement);
+
+		const rvmUrl = game.data.rvmUrl;
+		const iframeUrl = game.data.iframeUrl;
+
+		if(rvmUrl){
+			iframeElement.setAttribute("src", "");
+			iframeElement.classList.add("display-none");
+			rmvElement.classList.remove("display-none");
+			displayRVM(rvmUrl, game.data.rvmCommand);
+		}
+		else if(iframeUrl){
+			rmvElement.classList.add("display-none");
+			iframeElement.classList.remove("display-none");
+			iframeElement.setAttribute("src", game.data.iframeUrl);
+		}
+		
+		modifyCardUI(cardElement, "select");
+		doAllCardNoInteractable(cardElement);
+
+		if(prevSelectedCard) await deselectCard(prevSelectedCard, cardElement);
+		updateAll();
+	}
+
+	async function deselectCard(cardElement, nextCardElement){
+		modifyCardUI(cardElement, "deselect");
+
+		cardElement.classList.remove("selected-card");
+		if(!nextCardElement) iframeElement.setAttribute("src", "");
+
+		const game = getGameByElement(cardElement);
+		const rvmUrl = game.data.rvmUrl;
+		if(rvmUrl){
+			const rvmContainer = rmvElement.querySelector('.rvmContainer');
+			if(rvmContainer){
+				const barElement = rvmContainer.querySelector('.rvmLeft');
+				if(barElement) barElement.getElementsByTagName('a')[0]?.click();
+			}
+			rvmContainer?.remove();
+		}
+		
+		const prevSelectedCardRow = getCardRowByElement(cardElement);
+		const nextSelectedCardRow = getCardRowByElement(nextCardElement);
+
+		if(prevSelectedCardRow !== nextSelectedCardRow){
+			gameDisplayerElement.classList.remove("showAnim");
+			gameDisplayerElement.classList.add("hideAnim");
+
+			return new Promise((resolve) => {
+				setTimeout(() => {resolve(true);}, 250);
+			});
+		}
+
+		return true;
+	}
+
+	function updateAll(){
+		updateGridNumColumns();
+		updateGameDisplayer();
+		updateGameScreen();
+
+		setTimeout(() => {
+			gameDisplayerElement.scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
+		}, 500);
+
+	}
+
+	function updateGridNumColumns(){
+		gridNumColumns = gridComputedStyle.getPropertyValue("grid-template-columns").split(" ").length;
+	}
+
+	function updateGameDisplayer(){
+		const selectCardElement = getSelectedCardElement();
+		const selectedCardRow = getCardRowByElement(selectCardElement);
+		if(selectedCardRow > -1){
+			gameDisplayerElement.classList.remove("hideAnim");
+			gameDisplayerElement.classList.add("showAnim");
+			gameDisplayerElement.style.setProperty('grid-row', `${selectedCardRow + 2}`);
+		}
+	}
+
+	function updateGameScreen(){
+		const selectedCard = getSelectedCardElement();
+
+		if(selectedCard){
+			screenElement.style.setProperty('opacity', '100%');
+			gameDisplayerElement.style.setProperty('z-index', '8');
+			selectedCard.style.setProperty('z-index', '7');
+		}
+		else{
+			screenElement.style.setProperty('opacity', '0%');
+			gameDisplayerElement.style.setProperty('z-index', '1');
+		}
+
+		
+	}
+
+	function modifyCardUI(cardElement, operation){
+		switch(operation){
+			case "enter":
+			{
+				if(getSelectedCardElement() === cardElement) return;
+				const game = getGameByElement(cardElement);
+				const data = game.data;
+
+				createCardInfo(cardElement, data);
+
+				cardElement.style.setProperty('z-index', '7');
+				
+				const cardScreenDiv = document.createElement('div');
+				cardScreenDiv.classList.add("card-screen");
+				cardElement.append(cardScreenDiv);
+
+				const cardVideoDiv = document.createElement('div');
+				cardVideoDiv.classList.add("card-video");
+				const videoTag = document.createElement('video');
+				videoTag.loop = true;
+				videoTag.autoplay = true;
+				videoTag.muted = true;
+				const sourceTag = document.createElement('source');
+				sourceTag.setAttribute("src", data.videoUrl);
+				sourceTag.setAttribute("type", "video/mp4");
+				videoTag.append(sourceTag);
+				cardVideoDiv.append(videoTag);
+				cardElement.append(cardVideoDiv);
+			}
+			break;
+
+			case "select":
+			{
+				const game = getGameByElement(cardElement);
+				const data = game.data;
+
+				let cardInfoDiv = cardElement.querySelector(".card-info");
+				if(!cardInfoDiv){
+					cardInfoDiv = createCardInfo(cardElement, data);
+				}
+			
+				cardElement.querySelector(".card-video")?.remove();
+
+				if(!cardElement.querySelector(".card-screen")){
+					const cardScreenDiv = document.createElement('div');
+					cardScreenDiv.classList.add("card-screen");
+					cardElement.append(cardScreenDiv);
+				}
+				
+				const cardDecorator = document.createElement('div');
+				cardDecorator.classList.add("card-decorator");
+				cardElement.append(cardDecorator);
+				
+				const cardQuit = document.createElement('button');
+				cardQuit.classList.add("card-quit");
+				cardQuit.textContent = "X";
+				cardQuit.classList.add("card-button");
+				cardInfoDiv.append(cardQuit);
+			
+				const cardDescription = document.createElement('p');
+				cardDescription.classList.add("card-description");
+				cardDescription.textContent = data.description;
+				cardInfoDiv.append(cardDescription);
+
+				const cardCategories = document.createElement('p');
+				cardCategories.classList.add("card-categories");
+				let catStr = "";
+				for(let i = 0; i < data.categories.length; i++){
+					category = data.categories[i];
+					catStr += category + ((i < data.categories.length -1) ? ", "  : "");
+				}
+				cardCategories.textContent = catStr;
+				cardInfoDiv.append(cardCategories);
+
+				const cardDeveloper = document.createElement('p');
+				cardDeveloper.classList.add("card-developer");
+				cardDeveloper.textContent = data.developer;
+				cardInfoDiv.append(cardDeveloper);
+
+				const cardReleased = document.createElement('p');
+				cardDescription.classList.add("card-released");
+				cardReleased.textContent = data.released;
+				cardInfoDiv.append(cardReleased);
+
+				const cardTechnology = document.createElement('p');
+				cardTechnology.classList.add("card-technology");
+				cardTechnology.textContent = data.technology;
+				cardInfoDiv.append(cardTechnology);
+
+				const cardPlatforms = document.createElement('p');
+				cardPlatforms.classList.add("card-platforms");
+				cardPlatforms.textContent = data.platforms;
+				cardInfoDiv.append(cardPlatforms);
+				
+			}
+			break;
+
+			case "deselect":
+			{
+				cardElement.querySelector(".card-info")?.remove();
+				cardElement.querySelector(".card-video")?.remove();
+				cardElement.querySelector(".card-screen")?.remove();
+				cardElement.querySelector(".card-decorator")?.remove();
+				cardElement.style.setProperty('z-index', '0');
+			}
+			break;
+
+			case "leave":
+			{
+				if(getSelectedCardElement() === cardElement) return;
+
+				cardElement.querySelector(".card-info")?.remove();
+				cardElement.querySelector(".card-video")?.remove();
+				cardElement.querySelector(".card-screen")?.remove();
+				cardElement.querySelector(".card-decorator")?.remove();
+				cardElement.style.setProperty('z-index', '0');
+			}
+			break;
+
+		}
+	}
+
+	function createCardInfo(cardElement, data){
+		const cardInfoDiv = document.createElement('div');
+		cardInfoDiv.classList.add("card-info");
+		
+		const cardTitle = document.createElement('h1');
+		cardTitle.classList.add("card-title");
+		cardTitle.textContent = data.title;
+		cardInfoDiv.append(cardTitle);
+
+		cardElement.append(cardInfoDiv);
+
+		return cardInfoDiv;
+	}
+
+	function displayRVM(url, command){
+		const c=document.querySelector('#RVMPlayer');
+		c.querySelector('.rvmContainer')?.remove();
+		//@ts-ignore
+		rvmPlayer_cpc6128(c,{disk: {type:'dsk', url: url},command: `${command}\n`,warpFrames: 20*50});
+	}
+
+	function getCardRowByElement(cardElement){
+		if(cardElement){
+			//@ts-ignore
+			const selectedCardIndex = parseInt(cardElement.getAttribute("data-index"));
+			const selectedCardRow = Math.floor(selectedCardIndex / gridNumColumns);
+			return selectedCardRow;
+		}
+		return -1;
+	}
+
+	function doAllCardNoInteractable(skipCardElement){
+		cardElements.forEach((cardElement) => {
+			if(cardElement !== skipCardElement){
+				cardElement.classList.add("no-interactable");
+			}
+		});
+	}
+
+	function doAllCardInteractable(){
+		cardElements.forEach((cardElement) => {
+			cardElement.classList.remove("no-interactable");
+		});
+	}
+
+	function getSelectedCardElement(){
+		return document.querySelector(".selected-card");
+	}
+
+	function getGameByElement(cardElement){
+		const dataName = cardElement.getAttribute("data-name");
+		for(const game of games){
+			if(game.slug === dataName){
+				return game;
+			}
+		}
+		return null;
+	}
+
+</script>

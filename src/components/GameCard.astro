@@ -1,0 +1,9 @@
+---
+import { Image } from "astro:assets";
+const {game = {}, index} = Astro.props;
+const dataNameValue = game.slug || undefined;
+---
+
+<div tabindex="0" class={`game-card`} data-name={dataNameValue} data-index={index}>
+    <Image class="card-image" src={game.data.thumbnailUrl} alt={dataNameValue+" thumbnail image"} format="webp" width="320" height="180"/>
+</div>

@@ -1,0 +1,33 @@
+---
+import { Image } from "astro:assets";
+---
+
+<header class="h-[60px]">
+    <div id="brand-area">
+        <Image id="brand-logo" src="/images/logo.png" alt="Logo" format="webp" width="40" height="40"/>
+        <text id="brand-name"><span>Frasquito</span><span>Games</span></text>
+    </div>
+
+    <div id="search-area">
+        <form class="flex items-center">   
+            <label for="simple-search" class="sr-only">Search</label>
+            <div class="relative w-full">
+                <input type="text" id="simple-search" class="rounded-full block w-full pl-6 pr-6 p-2" placeholder="Search" required>
+            </div>
+        </form>
+    </div>
+
+    <div id="nav-area">
+        <!--
+        <button type="button" class="w-10 h-10 rounded-full bg-violet-600 hover:bg-red-500 text-white">?</button>
+        -->
+        
+        <!-- 
+        <nav>
+            <a href="/fqt">FQT</a>
+            <a href="/about">About</a>
+        </nav>
+        -->
+    </div>
+     
+</header>

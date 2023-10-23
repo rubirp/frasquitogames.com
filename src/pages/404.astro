@@ -1,0 +1,8 @@
+---
+const origin  = Astro.url.origin;
+---
+
+
+<script define:vars={{origin:origin}}>
+	window.location.replace(origin);
+</script>

@@ -1,0 +1,26 @@
+---
+import { SITE_TITLE, SITE_DESCRIPTION } from '../Constants';
+import '../styles/global.css';
+
+const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
+---
+
+<head>
+    <!-- Global Metadata -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#6842ff" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
+    <link rel="canonical" href="https://frasquitogames.com" />
+
+    <script type="module" src='https://cdn.rvmplayer.org/rvmplayer.cpc6128.min.js'></script>
+
+     <!-- Non declarative tags -->
+</head>
