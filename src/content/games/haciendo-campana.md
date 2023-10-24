@@ -5,7 +5,7 @@ The game consists of fast-paced matches in which two characters, controlled by p
 categories: ['Strategy', 'Multiplayer', 'Retro']
 developer: 'Frasquito Games'
 released: 'September 2016'
-technology: 'C++, cpctelera'
+technology: 'C, cpctelera'
 platforms: 'Amstrad CPC464'
 thumbnailUrl: '/images/haciendo-campana.png'
 videoUrl: '/videos/haciendo-campana.mp4'
