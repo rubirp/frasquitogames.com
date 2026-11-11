@@ -1,33 +1,23 @@
 ---
-import { Image } from "astro:assets";
+import { PORTFOLIO_URL } from '../Constants';
 ---
 
-<header class="h-[60px]">
-    <div id="brand-area">
-        <Image id="brand-logo" src="/images/logo.png" alt="Logo" format="webp" width="40" height="40"/>
-        <text id="brand-name"><span>Frasquito</span><span>Games</span></text>
-    </div>
+<header class="site-header">
+    <div class="header-inner">
+        <a id="brand-area" href="#home" aria-label="Frasquito Games, home">
+            <img id="brand-logo" src="/images/logo.png" alt="" width="40" height="40" />
+            <span id="brand-name"><span>Frasquito</span><span>Games</span></span>
+        </a>
 
-    <div id="search-area">
-        <form class="flex items-center">   
-            <label for="simple-search" class="sr-only">Search</label>
-            <div class="relative w-full">
-                <input type="text" id="simple-search" class="rounded-full block w-full pl-6 pr-6 p-2" placeholder="Search" required>
-            </div>
-        </form>
+        <div id="nav-area">
+            <nav aria-label="Main">
+                <a class="nav-link" href="#home" data-nav="games">Games</a>
+                <a class="nav-link" href="#about" data-nav="about">About</a>
+                <a class="nav-link" href={PORTFOLIO_URL} target="_blank" rel="noopener">Portfolio
+                    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 3h4v4M13 3 7.5 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="visually-hidden">(opens rubirp.dev)</span>
+                </a>
+            </nav>
+        </div>
     </div>
-
-    <div id="nav-area">
-        <!--
-        <button type="button" class="w-10 h-10 rounded-full bg-violet-600 hover:bg-red-500 text-white">?</button>
-        -->
-        
-        <!-- 
-        <nav>
-            <a href="/fqt">FQT</a>
-            <a href="/about">About</a>
-        </nav>
-        -->
-    </div>
-     
 </header>

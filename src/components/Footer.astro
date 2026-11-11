@@ -1,0 +1,17 @@
+---
+import { LINKS } from '../Constants';
+---
+
+<footer class="site-footer">
+    <div class="footer-inner">
+        <p>
+            <img src="/images/logo.png" alt="" width="28" height="28" />
+            <span><strong>Frasquito Games.</strong> Small games by Rubén Rodríguez.</span>
+        </p>
+        <ul class="footer-links">
+            {LINKS.map((link) => (
+                <li><a href={link.url} target="_blank" rel="noopener">{link.label}</a></li>
+            ))}
+        </ul>
+    </div>
+</footer>

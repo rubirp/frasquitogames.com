@@ -1,5 +1,5 @@
 ---
-import { SITE_TITLE, SITE_DESCRIPTION } from '../Constants';
+import { SITE_TITLE, SITE_DESCRIPTION, SITE_URL } from '../Constants';
 import '../styles/global.css';
 
 const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
@@ -15,12 +15,21 @@ const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
 
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#6842ff" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={SITE_URL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={SITE_URL + '/images/social.png'} />
 
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito">
-    <link rel="canonical" href="https://frasquitogames.com" />
+    <link rel="canonical" href={SITE_URL} />
 
-    <script type="module" src='https://cdn.rvmplayer.org/rvmplayer.cpc6128.min.js'></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" />
 
-     <!-- Non declarative tags -->
+    <!-- The Amstrad emulator script is loaded by scripts/portal.js only when that game is played. -->
 </head>

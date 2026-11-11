@@ -1,9 +1,21 @@
 ---
-import { Image } from "astro:assets";
-const {game = {}, index} = Astro.props;
-const dataNameValue = game.slug || undefined;
+/*
+  One game in the grid. The whole card is a link to #game/<slug>; scripts/portal.js
+  opens the play panel for it. Title and genre are always visible; the gameplay video
+  (data-video) is only loaded on hover or keyboard focus.
+*/
+const { game, index } = Astro.props;
 ---
 
-<div tabindex="0" class={`game-card`} data-name={dataNameValue} data-index={index}>
-    <Image class="card-image" src={game.data.thumbnailUrl} alt={dataNameValue+" thumbnail image"} format="webp" width="320" height="180"/>
-</div>
+<a class="game-card" href={`#game/${game.slug}`} data-name={game.slug} data-index={index} data-video={game.videoUrl} aria-label={`Play ${game.title}. ${game.categories}.`}>
+    <span class="card-media">
+        <img class="card-image" src={game.thumbnailUrl} alt="" width="1280" height="720" loading={index > 1 ? "lazy" : undefined} decoding="async" />
+        <span class="card-badge">Now open</span>
+    </span>
+    <span class="card-info">
+        <strong class="card-title" lang={game.titleLang}>{game.title}</strong>
+        <span class="card-categories">{game.categories}</span>
+        <span class="card-play"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>Play</span>
+        <span class="card-why">{game.why}</span>
+    </span>
+</a>
